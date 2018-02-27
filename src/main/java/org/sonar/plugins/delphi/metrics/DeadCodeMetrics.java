@@ -23,14 +23,12 @@
 package org.sonar.plugins.delphi.metrics;
 
 import org.apache.commons.io.FilenameUtils;
-import org.sonar.api.batch.SensorContext;
+import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.InputFile.Type;
 import org.sonar.api.batch.rule.ActiveRule;
 import org.sonar.api.batch.rule.ActiveRules;
-import org.sonar.api.component.ResourcePerspectives;
-import org.sonar.api.issue.Issuable;
-import org.sonar.api.issue.Issue;
+import org.sonar.api.batch.sensor.issue.NewIssue;
 import org.sonar.api.rule.RuleKey;
 import org.sonar.plugins.delphi.antlr.DelphiLexer;
 import org.sonar.plugins.delphi.core.language.ClassInterface;
@@ -40,10 +38,7 @@ import org.sonar.plugins.delphi.core.language.UnitInterface;
 import org.sonar.plugins.delphi.pmd.DelphiPmdConstants;
 import org.sonar.plugins.delphi.utils.DelphiUtils;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Metric used to search for "dead code" (unused units, unused methods).
@@ -59,7 +54,7 @@ public class DeadCodeMetrics extends DefaultMetrics implements MetricsInterface 
   private List<UnitInterface> allUnits;
   private final ActiveRule unitRule;
   private final ActiveRule functionRule;
-  private final ResourcePerspectives perspectives;
+  private final SensorContext context;
 
   public static final RuleKey RULE_KEY_UNUSED_UNIT = RuleKey.of(DelphiPmdConstants.REPOSITORY_KEY, "UnusedUnitRule");
   public static final RuleKey RULE_KEY_UNUSED_FUNCTION = RuleKey.of(DelphiPmdConstants.REPOSITORY_KEY, "UnusedFunctionRule");
@@ -67,11 +62,11 @@ public class DeadCodeMetrics extends DefaultMetrics implements MetricsInterface 
   /**
    * {@inheritDoc}
    */
-  public DeadCodeMetrics(ActiveRules activeRules, ResourcePerspectives perspectives) {
+  public DeadCodeMetrics(ActiveRules activeRules, SensorContext sensorContext) {
     super();
-    this.perspectives = perspectives;
+    context = sensorContext;
     isCalculated = false;
-    allUnits = new ArrayList<UnitInterface>();
+    allUnits = new ArrayList<>();
     unitRule = activeRules.find(RULE_KEY_UNUSED_UNIT);
     functionRule = activeRules.find(RULE_KEY_UNUSED_FUNCTION);
   }
@@ -81,7 +76,7 @@ public class DeadCodeMetrics extends DefaultMetrics implements MetricsInterface 
    */
 
   @Override
-  public void analyse(InputFile resource, SensorContext sensorContext, List<ClassInterface> classes,
+  public void analyse(InputFile resource, List<ClassInterface> classes,
     List<FunctionInterface> functions,
     Set<UnitInterface> units) {
     if (!isCalculated) {
@@ -102,28 +97,28 @@ public class DeadCodeMetrics extends DefaultMetrics implements MetricsInterface 
    */
 
   @Override
-  public void save(InputFile resource, SensorContext sensorContext) {
-    if (resource.type() == Type.TEST) {
+  public void save(InputFile inputFile) {
+    if (inputFile.type() == Type.TEST) {
       return;
     }
 
-    String fileName = FilenameUtils.removeExtension(resource.file().getName());
+    String fileName = FilenameUtils.removeExtension(inputFile.filename());
     UnitInterface unit = findUnit(fileName);
     if (unit == null) {
-      DelphiUtils.LOG.debug("No unit for " + fileName + "(" + resource.absolutePath() + ")");
+      DelphiUtils.LOG.debug("No unit for " + fileName + "(" + inputFile.toString() + ")");
       return;
     }
 
     if (unusedUnits.contains(fileName.toLowerCase())) {
-      Issuable issuable = perspectives.as(Issuable.class, resource);
-      if (issuable != null) {
-        Issue issue = issuable.newIssueBuilder()
-          .ruleKey(unitRule.ruleKey())
-          .line(unit.getLine())
-          .message(unit.getName() + DEAD_UNIT_VIOLATION_MESSAGE)
-          .build();
-        issuable.addIssue(issue);
-      }
+      NewIssue newIssue = context.newIssue();
+      newIssue
+              .forRule(unitRule.ruleKey())
+              .at(newIssue.newLocation()
+                      .on(inputFile)
+                      .at(inputFile.newRange(unit.getLine(), 1,
+                              unit.getLine(), 1))
+                      .message(unit.getName() + DEAD_UNIT_VIOLATION_MESSAGE));
+      newIssue.save();
     }
 
     for (FunctionInterface function : getUnitFunctions(unit)) {
@@ -160,17 +155,22 @@ public class DeadCodeMetrics extends DefaultMetrics implements MetricsInterface 
       }
 
       if (unusedFunctions.contains(function)) {
-        Issuable issuable = perspectives.as(Issuable.class, resource);
-        if (issuable != null) {
-          Issue issue = issuable.newIssueBuilder()
-            .ruleKey(functionRule.ruleKey())
-            .line(function.getLine())
-            .message(function.getRealName() + DEAD_FUNCTION_VIOLATION_MESSAGE)
-            .build();
 
-          // TODO Unused functions it's not working. There are many
-          // false positives.
-          // issuable.addIssue(issue);
+        RuleKey rule = functionRule.ruleKey();
+        if (rule != null) {
+          int line = function.getLine();
+          int column = function.getColumn();
+
+
+          NewIssue newIssue = context.newIssue();
+          newIssue
+              .forRule(rule)
+              .at(newIssue.newLocation()
+                  .on(inputFile)
+                  .at(inputFile.newRange(line, column,
+                      line, column + function.getShortName().length()))
+                  .message(function.getRealName() + DEAD_FUNCTION_VIOLATION_MESSAGE));
+          newIssue.save();
         }
       }
     }
@@ -181,18 +181,14 @@ public class DeadCodeMetrics extends DefaultMetrics implements MetricsInterface 
    * @return List of all unit functions (global and class functions)
    */
   private List<FunctionInterface> getUnitFunctions(UnitInterface unit) {
-    Set<FunctionInterface> result = new HashSet<FunctionInterface>();
-    for (FunctionInterface globalFunction : unit.getFunctions()) {
-      result.add(globalFunction);
-    }
+    Set<FunctionInterface> result = new HashSet<>();
+    Collections.addAll(result, unit.getFunctions());
 
     for (ClassInterface clazz : unit.getClasses()) {
-      for (FunctionInterface function : clazz.getFunctions()) {
-        result.add(function);
-      }
+      Collections.addAll(result, clazz.getFunctions());
     }
 
-    return new ArrayList<FunctionInterface>(result);
+    return new ArrayList<>(result);
   }
 
   /**
@@ -202,15 +198,13 @@ public class DeadCodeMetrics extends DefaultMetrics implements MetricsInterface 
    * @return List of unused functions
    */
   protected Set<FunctionInterface> findUnusedFunctions(Set<UnitInterface> units) {
-    Set<FunctionInterface> allFunctions = new HashSet<FunctionInterface>();
-    Set<FunctionInterface> usedFunctions = new HashSet<FunctionInterface>();
+    Set<FunctionInterface> allFunctions = new HashSet<>();
+    Set<FunctionInterface> usedFunctions = new HashSet<>();
     for (UnitInterface unit : units) {
       List<FunctionInterface> unitFunctions = getUnitFunctions(unit);
       allFunctions.addAll(unitFunctions);
       for (FunctionInterface unitFunction : unitFunctions) {
-        for (FunctionInterface usedFunction : unitFunction.getCalledFunctions()) {
-          usedFunctions.add(usedFunction);
-        }
+        Collections.addAll(usedFunctions, unitFunction.getCalledFunctions());
       }
 
     }
@@ -224,8 +218,8 @@ public class DeadCodeMetrics extends DefaultMetrics implements MetricsInterface 
    * @return a list of unused units
    */
   protected List<String> findUnusedUnits(Set<UnitInterface> units) {
-    Set<String> usedUnits = new HashSet<String>();
-    List<String> result = new ArrayList<String>();
+    Set<String> usedUnits = new HashSet<>();
+    List<String> result = new ArrayList<>();
     for (UnitInterface unit : units) {
       if (unit.getFileName().toLowerCase().endsWith(".pas")) {
         result.add(unit.getName().toLowerCase());
@@ -247,7 +241,7 @@ public class DeadCodeMetrics extends DefaultMetrics implements MetricsInterface 
 
   @Override
   public boolean executeOnResource(InputFile resource) {
-    return DelphiUtils.acceptFile(resource.absolutePath());
+    return DelphiUtils.acceptFile(resource.filename());
   }
 
   /**

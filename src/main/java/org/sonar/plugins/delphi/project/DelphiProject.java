@@ -27,7 +27,6 @@ import org.sonar.api.batch.fs.InputFile;
 import org.sonar.plugins.delphi.utils.DelphiUtils;
 import org.xml.sax.SAXException;
 
-import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,9 +38,9 @@ import java.util.List;
 public class DelphiProject {
 
   private String name = "";
-  private List<String> definitions = new ArrayList<String>();
-  private List<File> files = new ArrayList<File>();
-  private List<File> includeDirectories = new ArrayList<File>();
+  private List<String> definitions = new ArrayList<>();
+  private List<File> files = new ArrayList<>();
+  private List<File> includeDirectories = new ArrayList<>();
   private File file = null;
 
   /**
@@ -65,16 +64,12 @@ public class DelphiProject {
       DelphiUtils.LOG.error("Could not find .dproj file: " + xml.getAbsolutePath());
     } catch (IllegalArgumentException e) {
       DelphiUtils.LOG.error("No .dproj file to parse. (null)");
-    } catch (XMLStreamException e) {
-      DelphiUtils.LOG.error(".dproj xml error: " + e.getMessage());
-    } catch (SAXException e) {
-      DelphiUtils.LOG.error(".dproj xml error: " + e.getMessage());
     }
   }
 
   /**
    * Adds a source file to project
-   * 
+   *
    * @param path File path
    * @throws IOException If file not found
    */
@@ -126,7 +121,7 @@ public class DelphiProject {
    * @throws SAXException when parsing error occurs
    * @throws IllegalArgumentException If file == null
    */
-  private void parseFile(File xml) throws IOException, XMLStreamException, SAXException {
+  private void parseFile(File xml) throws IOException {
     if (xml == null) {
       throw new IllegalArgumentException("No xml file passed");
     } else if (!xml.exists()) {
@@ -174,12 +169,8 @@ public class DelphiProject {
     this.file = file;
   }
 
-  public void setSourceFiles(List<InputFile> list) {
-    List<File> files = new ArrayList<File>();
-    for (InputFile inputFile : list) {
-      files.add(inputFile.file());
-    }
-    this.files = files;
+  public void setSourceFiles(List<File> list) {
+    this.files = list;
   }
 
 }

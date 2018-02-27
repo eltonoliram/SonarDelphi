@@ -53,14 +53,14 @@ public class TypeAnalyzerTest {
   private AdvanceToNodeOperation advanceToOp;
 
   @Before
-  public void init() throws IOException, RecognitionException {
+  public void init() {
     analyzer = new TypeAnalyzer();
     results = new CodeAnalysisResults();
     results.setActiveUnit(new DelphiUnit("test"));
 
     File file = DelphiUtils.getResource(FILE_NAME);
     ast = new DelphiAST(file);
-    code = new CodeTree(new CodeNode<ASTTree>(ast), new CodeNode<Tree>(ast.getChild(0)));
+    code = new CodeTree(new CodeNode<>(ast), new CodeNode<>(ast.getChild(0)));
     advanceToOp = new AdvanceToNodeOperation(LexerMetrics.NEW_TYPE);
   }
 

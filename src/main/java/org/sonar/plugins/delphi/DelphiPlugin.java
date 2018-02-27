@@ -22,13 +22,11 @@
  */
 package org.sonar.plugins.delphi;
 
+import org.sonar.api.Plugin;
 import org.sonar.api.Properties;
 import org.sonar.api.Property;
-import org.sonar.api.SonarPlugin;
-import org.sonar.plugins.delphi.colorizer.DelphiColorizerFormat;
 import org.sonar.plugins.delphi.core.DelphiLanguage;
 import org.sonar.plugins.delphi.core.helpers.DelphiProjectHelper;
-import org.sonar.plugins.delphi.cpd.DelphiCpdMapping;
 import org.sonar.plugins.delphi.pmd.DelphiPmdSensor;
 import org.sonar.plugins.delphi.pmd.profile.DefaultDelphiProfile;
 import org.sonar.plugins.delphi.pmd.profile.DelphiPmdProfileExporter;
@@ -45,13 +43,14 @@ import java.util.List;
 
 @Properties({
   @Property(key = DelphiPlugin.EXCLUDED_DIRECTORIES_KEY, defaultValue = "", name = "Excluded sources",
-    description = "List of excluded directories or files, that will not be parsed.", global = true, project = true),
+    description = "List of excluded directories or files, that will not be parsed.", global = true, project = true,
+     multiValues = true),
   @Property(key = DelphiPlugin.CC_EXCLUDED_KEY, defaultValue = "", name = "Code coverage excluded directories",
     description = "Code coverage excluded directories list. Files in those directories will not be checked for code coverage.",
     global = true, project = true),
   @Property(key = DelphiPlugin.INCLUDED_DIRECTORIES_KEY, defaultValue = "", name = "Include directories",
     description = "Include directories that will be looked for include files for preprocessor directive {$include}", global = true,
-    project = true),
+    project = true, multiValues = true),
   @Property(key = DelphiPlugin.INCLUDE_EXTEND_KEY, defaultValue = "true", name = "Include extend option",
     description = "Include extend options, can be: 'true' (include files will be processed) or 'false' (turn the feature off)",
     global = true, project = true),
@@ -69,7 +68,7 @@ import java.util.List;
   @Property(key = DelphiPlugin.CODECOVERAGE_REPORT_KEY, defaultValue = "delphi code coverage report", name = "Code coverage report file",
     description = "Code coverage report to be parsed by Delphi Code Coverage", global = false, project = true),
 })
-public class DelphiPlugin extends SonarPlugin {
+public class DelphiPlugin implements Plugin {
 
   public static final String EXCLUDED_DIRECTORIES_KEY = "sonar.delphi.sources.excluded";
   public static final String CC_EXCLUDED_KEY = "sonar.delphi.codecoverage.excluded";
@@ -80,23 +79,32 @@ public class DelphiPlugin extends SonarPlugin {
   public static final String CODECOVERAGE_TOOL_KEY = "sonar.delphi.codecoverage.tool";
   public static final String CODECOVERAGE_REPORT_KEY = "sonar.delphi.codecoverage.report";
 
+
   /**
    * {@inheritDoc}
    */
-
   @Override
-  public List<Class> getExtensions() {
-    List<Class> list = new ArrayList<Class>();
+  public String toString() {
+    return getClass().getSimpleName();
+  }
+
+  /**
+   * {@inheritDoc}
+   */
+  @Override
+  public void define(Context context) {
+    context.addExtensions(getExtensions());
+  }
+
+  private List<Class> getExtensions() {
+    List<Class> list = new ArrayList<>();
 
     // Sensors
     list.add(DelphiSensor.class);
     // Core
     list.add(DelphiLanguage.class);
-    list.add(DelphiCpdMapping.class);
     // Core helpers
     list.add(DelphiProjectHelper.class);
-    // Colorizer
-    list.add(DelphiColorizerFormat.class);
     // Surefire
     list.add(SurefireSensor.class);
     // Pmd

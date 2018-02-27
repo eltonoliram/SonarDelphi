@@ -36,9 +36,9 @@ import java.util.Set;
  */
 public class DelphiSource {
 
-  private List<Line> lines = new ArrayList<Line>();
+  private List<Line> lines = new ArrayList<>();
   private CodeRecognizer codeRecognizer;
-  private Set<Integer> noSonarTagLines = new HashSet<Integer>();
+  private Set<Integer> noSonarTagLines = new HashSet<>();
 
   /**
    * Constructor. Does the line processing.
@@ -69,7 +69,7 @@ public class DelphiSource {
    * @param metric Metric to get
    * @return Sum of specified metric on all lines in file
    */
-  public double getMeasure(Metric metric) {
+  public int getMeasure(Metric metric) {
     return getMeasure(metric, 1, lines.size());
   }
 

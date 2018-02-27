@@ -50,7 +50,7 @@ public class InterfaceAnalyzerTest {
   private AdvanceNodeOperation advanceOp;
 
   @Before
-  public void init() throws IOException, RecognitionException {
+  public void init() {
     analyzer = new InterfaceAnalyzer();
     results = new CodeAnalysisResults();
     results.setActiveUnit(new DelphiUnit("test"));
@@ -60,7 +60,7 @@ public class InterfaceAnalyzerTest {
     ast.addChild(new CommonTree(new CommonToken(LexerMetrics.IDENT.toMetrics(), "ident")));
     ast.addChild(new CommonTree(new CommonToken(LexerMetrics.IMPLEMENTATION.toMetrics(), "impl")));
 
-    code = new CodeTree(new CodeNode<ASTTree>(ast), new CodeNode<Tree>(ast.getChild(0)));
+    code = new CodeTree(new CodeNode<>(ast), new CodeNode<>(ast.getChild(0)));
     advanceOp = new AdvanceNodeOperation();
   }
 

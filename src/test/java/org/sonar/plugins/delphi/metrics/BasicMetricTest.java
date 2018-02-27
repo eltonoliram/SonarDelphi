@@ -61,28 +61,28 @@ public class BasicMetricTest {
     InputFile dprResource = mock(InputFile.class);
     InputFile dpkResource = mock(InputFile.class);
     InputFile cppResource = mock(InputFile.class);
-    when(pasResource.absolutePath()).thenReturn("source.pas");
-    when(dprResource.absolutePath()).thenReturn("source.dpr");
-    when(cppResource.absolutePath()).thenReturn("source.cpp");
-    when(dpkResource.absolutePath()).thenReturn("source.dpk");
+    when(pasResource.filename()).thenReturn("source.pas");
+    when(dprResource.filename()).thenReturn("source.dpr");
+    when(cppResource.filename()).thenReturn("source.cpp");
+    when(dpkResource.filename()).thenReturn("source.dpk");
 
-    assertTrue(new BasicMetrics().executeOnResource(pasResource));
-    assertTrue(new BasicMetrics().executeOnResource(dprResource));
-    assertTrue(new BasicMetrics().executeOnResource(dpkResource));
-    assertFalse(new BasicMetrics().executeOnResource(cppResource));
+    assertTrue(new BasicMetrics(null).executeOnResource(pasResource));
+    assertTrue(new BasicMetrics(null).executeOnResource(dprResource));
+    assertTrue(new BasicMetrics(null).executeOnResource(dpkResource));
+    assertFalse(new BasicMetrics(null).executeOnResource(cppResource));
   }
 
   @Test
   public void testComments() {
-    assertThat((int) source.getMeasure(Metric.COMMENT_LINES), is(14));
-    assertThat((int) source.getMeasure(Metric.COMMENT_BLANK_LINES), is(1));
-    assertThat((int) source.getMeasure(Metric.PUBLIC_DOC_API), is(2));
+    assertThat(source.getMeasure(Metric.COMMENT_LINES), is(14));
+    assertThat(source.getMeasure(Metric.COMMENT_BLANK_LINES), is(1));
+    assertThat(source.getMeasure(Metric.PUBLIC_DOC_API), is(2));
   }
 
   @Test
   public void testLines() {
-    assertThat((int) source.getMeasure(Metric.LINES), is(72));
-    assertThat((int) source.getMeasure(Metric.LINES_OF_CODE), is(43));
+    assertThat(source.getMeasure(Metric.LINES), is(72));
+    assertThat(source.getMeasure(Metric.LINES_OF_CODE), is(43));
   }
 
 }

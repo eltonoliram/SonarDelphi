@@ -22,12 +22,12 @@
  */
 package org.sonar.plugins.delphi.pmd.profile;
 
-import net.sourceforge.pmd.Language;
+import net.sourceforge.pmd.lang.Language;
 import net.sourceforge.pmd.RuleContext;
 import net.sourceforge.pmd.RuleSet;
 import net.sourceforge.pmd.RuleSets;
-import net.sourceforge.pmd.ast.CompilationUnit;
 import org.sonar.plugins.delphi.pmd.DelphiRuleChain;
+import net.sourceforge.pmd.lang.ast.Node;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -40,12 +40,12 @@ import java.util.List;
 public class DelphiRuleSets extends RuleSets {
 
   private DelphiRuleChain delphiRuleChain = new DelphiRuleChain();
-  private Collection<RuleSet> ruleSets = new ArrayList<RuleSet>();
+  private Collection<RuleSet> ruleSets = new ArrayList<>();
 
   @Override
-  public void apply(List<CompilationUnit> acuList, RuleContext ctx, Language language) {
+  public void apply(List<Node> acuList, RuleContext ctx, Language language) {
     for (RuleSet ruleSet : ruleSets) {
-      if (applies(language, ruleSet.getLanguage()) && ruleSet.applies(ctx.getSourceCodeFile())) {
+      if (ruleSet.applies(ctx.getSourceCodeFile())) {
         ruleSet.apply(acuList, ctx);
       }
     }

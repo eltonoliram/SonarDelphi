@@ -42,7 +42,7 @@ public class DelphiASTTest {
   private ASTTree ast;
 
   @Before
-  public void setup() throws IOException, RecognitionException {
+  public void setup() {
     ast = new DelphiAST(DelphiUtils.getResource(TEST_FILE));
   }
 
@@ -56,9 +56,7 @@ public class DelphiASTTest {
     try {
       DocumentBuilder parser = DocumentBuilderFactory.newInstance().newDocumentBuilder();
       parser.parse(xml);
-    } catch (ParserConfigurationException e) {
-      fail("Could not parse generated XML document");
-    } catch (SAXException e) {
+    } catch (ParserConfigurationException | SAXException e) {
       fail("Could not parse generated XML document");
     }
 

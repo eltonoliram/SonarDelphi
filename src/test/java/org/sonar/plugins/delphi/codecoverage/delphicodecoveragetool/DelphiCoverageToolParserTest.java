@@ -24,28 +24,21 @@ package org.sonar.plugins.delphi.codecoverage.delphicodecoveragetool;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.fs.internal.DefaultInputFile;
-import org.sonar.plugins.delphi.DelphiTestUtils;
+import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
+import org.sonar.api.batch.sensor.internal.SensorContextTester;
+import org.sonar.plugins.delphi.core.DelphiLanguage;
 import org.sonar.plugins.delphi.core.helpers.DelphiProjectHelper;
-import org.sonar.plugins.delphi.debug.DebugSensorContext;
 import org.sonar.plugins.delphi.utils.DelphiUtils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.when;
 
 public class DelphiCoverageToolParserTest
 {
-  private DebugSensorContext context;
+  private SensorContextTester context;
   private File baseDir;
   private DelphiProjectHelper delphiProjectHelper;
 
@@ -54,29 +47,27 @@ public class DelphiCoverageToolParserTest
 
   private final File reportFile = DelphiUtils.getResource(REPORT_FILE);
 
-  @Before
-  public void init() throws FileNotFoundException {
+  private void addFile(String fileName) throws IOException
+  {
+    File file = DelphiUtils.getResource(fileName);
+    final InputFile inputFile = TestInputFileBuilder.create("", baseDir, file)
+        .setLanguage(DelphiLanguage.KEY)
+        .setContents(DelphiUtils.readFileContent(file, delphiProjectHelper.encoding()))
+        .build();
+    context.fileSystem().add(inputFile);
+  }
 
-    context = new DebugSensorContext();
+  @Before
+  public void init() throws IOException {
 
     baseDir = DelphiUtils.getResource(ROOT_NAME);
 
-    List<File> sourceDirs = new ArrayList<File>();
+    context = SensorContextTester.create(baseDir);
 
-    sourceDirs.add(baseDir); // include baseDir
+    delphiProjectHelper = new DelphiProjectHelper(context.config(), context.fileSystem());
 
-    delphiProjectHelper = DelphiTestUtils.mockProjectHelper();
-    InputFile inputFile = new DefaultInputFile("ROOT_KEY_CHANGE_AT_SONARAPI_5",reportFile.getPath()).setModuleBaseDir(Paths.get(ROOT_NAME));
-    when(delphiProjectHelper.findFileInDirectories(REPORT_FILE)).thenReturn(inputFile);
-
-    when(delphiProjectHelper.findFileInDirectories(anyString())).thenAnswer(new Answer<InputFile>() {
-      @Override
-      public InputFile answer(InvocationOnMock invocation) throws Throwable {
-        InputFile inputFile = new DefaultInputFile("ROOT_KEY_CHANGE_AT_SONARAPI_5",((String) invocation.getArguments()[0])).setModuleBaseDir(Paths.get(ROOT_NAME));
-
-        return inputFile;
-      }
-    });
+    addFile(ROOT_NAME + "/Globals.pas");
+    addFile(ROOT_NAME + "/MainWindow.pas");
   }
 
   @Test
@@ -84,17 +75,16 @@ public class DelphiCoverageToolParserTest
     DelphiCodeCoverageToolParser parser = new DelphiCodeCoverageToolParser(reportFile, delphiProjectHelper);
     parser.parse(context);
 
-    String coverage_names[] = {"Globals.pas:coverage", "MainWindow.pas:coverage"};
-    double coverage_values[] = {100.00, 50.00};
-    String lineHits_names[] = {"Globals.pas:coverage_line_hits_data", "MainWindow.pas:coverage_line_hits_data"};
-    String lineHits_values[] = {"19=1;20=1", "36=1;37=0;38=1;39=0"};
+    assertEquals((Integer)1, context.lineHits(":Globals.pas", 16));
+    assertEquals((Integer)1, context.lineHits(":Globals.pas", 17));
+    assertEquals((Integer)0, context.lineHits(":Globals.pas", 23));
 
-    for (int i = 0; i < coverage_names.length; ++i) { // % of coverage
-      assertEquals(coverage_names[i] + "-coverage", coverage_values[i], context.getMeasure(coverage_names[i])
-        .getValue(), 0.0);
-      assertEquals(coverage_names[i] + "-lineHits", lineHits_values[i], context.getMeasure(lineHits_names[i])
-        .getData());
-    }
+    assertEquals((Integer)1, context.lineHits(":MainWindow.pas", 31));
+    assertEquals((Integer)1, context.lineHits(":MainWindow.pas", 36));
+    assertEquals((Integer)1, context.lineHits(":MainWindow.pas", 37));
+    assertEquals((Integer)1, context.lineHits(":MainWindow.pas", 38));
+    assertEquals((Integer)1, context.lineHits(":MainWindow.pas", 39));
+    assertEquals((Integer)1, context.lineHits(":MainWindow.pas", 40));
   }
 
 }

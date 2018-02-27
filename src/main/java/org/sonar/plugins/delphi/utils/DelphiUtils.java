@@ -118,14 +118,14 @@ public final class DelphiUtils {
 
   /**
    * Checking value range
-   * 
+   *
    * @param value Value to check
    * @param min Minimum range
    * @param max Maximum range
    * @return Trims value to range, then returns it
    */
-  public static double checkRange(double value, double min, double max) {
-    double newValue = value;
+  public static int checkIntRange(int value, int min, int max) {
+    int newValue = value;
     if (value < min) {
       newValue = min;
     } else if (value > max) {
@@ -135,27 +135,7 @@ public final class DelphiUtils {
   }
 
   /**
-   * Gets custom file filter, the file must ends with provided suffix
-   * 
-   * @param suffix File suffix
-   * @return CustomFileFilter
-   */
-  public static CustomFileFilter getCustomFileFilter(String[] suffix) {
-    return new CustomFileFilter(suffix);
-  }
-
-  /**
-   * Gets directory file filter, it filters out directories
-   * 
-   * @return DirectoryFileFilter
-   */
-  public static DirectoryFileFilter getDirectoryFileFilter() {
-    return new DirectoryFileFilter();
-  }
-
-  /**
-   * Gets FileFilter associated with DelphiLanguage source files (*.pas,
-   * *.dpr, *.dpk)
+   * Gets FileFilter associated with DelphiLanguage source files (*.pas, *.dpr, *.dpk)
    * 
    * @return FileFilter
    */
@@ -164,10 +144,7 @@ public final class DelphiUtils {
 
       @Override
       public boolean accept(File pathname) {
-        if (!pathname.isFile()) {
-          return false;
-        }
-        return acceptFile(pathname.getAbsolutePath());
+        return pathname.isFile() && acceptFile(pathname.getAbsolutePath());
       }
 
     };
@@ -270,7 +247,7 @@ public final class DelphiUtils {
    * 
    * @param file File to be read
    * @param encoding File content encoding
-   * @return File content readed to a string
+   * @return File content read to a string
    * @throws IOException When file not found
    */
   public static String readFileContent(File file, String encoding)
@@ -283,7 +260,7 @@ public final class DelphiUtils {
   }
 
   public static String getRelativePath(File file, List<File> dirs) {
-    List<String> stack = new ArrayList<String>();
+    List<String> stack = new ArrayList<>();
     String path = FilenameUtils.normalize(file.getAbsolutePath());
     File cursor = new File(path);
     while (cursor != null) {

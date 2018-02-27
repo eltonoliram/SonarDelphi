@@ -55,14 +55,14 @@ public class IncludeAnalyzerTest {
   private AdvanceToNodeOperation advanceToImpl;
 
   @Before
-  public void init() throws IOException, RecognitionException {
+  public void init() {
     analyzer = new IncludeAnalyzer();
     results = new CodeAnalysisResults();
     results.setActiveUnit(new DelphiUnit("test"));
 
     File file = DelphiUtils.getResource(FILE_NAME);
     ast = new DelphiAST(file);
-    code = new CodeTree(new CodeNode<ASTTree>(ast), new CodeNode<Tree>(ast.getChild(0)));
+    code = new CodeTree(new CodeNode<>(ast), new CodeNode<>(ast.getChild(0)));
     advanceToUses = new AdvanceToNodeOperation(LexerMetrics.USES);
     advanceToImpl = new AdvanceToNodeOperation(LexerMetrics.PROCEDURE);
   }

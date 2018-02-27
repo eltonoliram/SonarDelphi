@@ -56,7 +56,7 @@ public class CalledFunctionVerifierTest {
   CodeTree code;
 
   @Before
-  public void setup() throws IOException, RecognitionException {
+  public void setup() {
     results = new CodeAnalysisResults();
     verifier = new CalledFunctionVerifier(results);
 
@@ -82,7 +82,7 @@ public class CalledFunctionVerifierTest {
 
     File file = DelphiUtils.getResource(TEST_FILE);
     ASTTree ast = new DelphiAST(file);
-    code = new CodeTree(new CodeNode<ASTTree>(ast), new CodeNode<Tree>(ast.getChild(0)));
+    code = new CodeTree(new CodeNode<>(ast), new CodeNode<>(ast.getChild(0)));
   }
 
   @Test

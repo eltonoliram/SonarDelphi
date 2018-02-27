@@ -30,11 +30,11 @@ import org.sonar.api.resources.AbstractLanguage;
 public class DelphiLanguage extends AbstractLanguage {
 
   public static final String KEY = "delph";
-  public static DelphiLanguage instance = new DelphiLanguage();
+  public static final DelphiLanguage instance = new DelphiLanguage();
 
   public static final String FILE_SOURCE_CODE_SUFFIX = "pas";
-  public static final String FILE_PROJECT_SUFFIX = "dpr";
-  public static final String FILE_PACKAGE_SUFFIX = "dpk";
+  private static final String FILE_PROJECT_SUFFIX = "dpr";
+  private static final String FILE_PACKAGE_SUFFIX = "dpk";
 
   private static final String LANGUAGE_NAME = "Delphi";
 
@@ -45,7 +45,6 @@ public class DelphiLanguage extends AbstractLanguage {
    */
   public DelphiLanguage() {
     super(KEY, LANGUAGE_NAME);
-    instance = this;
   }
 
   /**

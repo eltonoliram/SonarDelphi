@@ -22,8 +22,6 @@ import org.junit.Test;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
-import static org.sonar.plugins.delphi.IssueMatchers.hasRuleKey;
-import static org.sonar.plugins.delphi.IssueMatchers.hasRuleLine;
 
 public class EmptyBeginStatementTest extends BasePmdRuleTest {
 
@@ -60,7 +58,7 @@ public class EmptyBeginStatementTest extends BasePmdRuleTest {
     builder.appendImpl("  Writeln('OK');");
     builder.appendImpl("end;");
 
-    analyse(builder);
+    execute(builder);
 
     assertThat(issues, is(empty()));
   }
