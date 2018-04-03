@@ -47,7 +47,7 @@ public class VisibilityAnalyzerTest {
   private CodeTree code;
 
   @Before
-  public void init() {
+  public void init() throws IOException, RecognitionException {
     code = mock(CodeTree.class);
     analyzer = new VisibilityAnalyzer();
     results = new CodeAnalysisResults();

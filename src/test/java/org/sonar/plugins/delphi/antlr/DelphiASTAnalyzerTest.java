@@ -49,14 +49,14 @@ public class DelphiASTAnalyzerTest {
   private static final String FILE_NAME = "/org/sonar/plugins/delphi/metrics/FunctionMetricsTest.pas";
 
   @BeforeClass
-  public static void setUp() {
+  public static void setUp() throws Exception {
     fileComplexity = 0;
     CodeAnalysisCacheResults.resetCache();
     analyser = new DelphiASTAnalyzer(DelphiTestUtils.mockProjectHelper());
   }
 
   @Test
-  public void analyseTest() {
+  public void analyseTest() throws IOException, RecognitionException {
     File file = DelphiUtils.getResource(FILE_NAME);
     DelphiAST ast = new DelphiAST(file);
     CodeAnalysisResults results = analyser.analyze(ast);

@@ -59,7 +59,7 @@ public class DelphiRuleTest {
   public void propertiesTest() {
     assertEquals(null, rule.getProperties());
 
-    List<Property> properties = new ArrayList<>();
+    List<Property> properties = new ArrayList<Property>();
     properties.add(new Property("a", "b"));
     rule.setProperties(properties);
 

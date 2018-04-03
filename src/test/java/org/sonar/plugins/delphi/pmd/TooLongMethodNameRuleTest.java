@@ -34,7 +34,7 @@ public class TooLongMethodNameRuleTest extends BasePmdRuleTest {
     builder.appendImpl(" Result := 1;");
     builder.appendImpl("end;");
 
-    execute(builder);
+    analyse(builder);
 
     assertThat(issues, is(empty()));
   }

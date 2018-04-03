@@ -162,7 +162,7 @@ public class DelphiRule implements Comparable<String> {
    */
   public void addProperty(Property property) {
     if (properties == null) {
-      properties = new ArrayList<>();
+      properties = new ArrayList<Property>();
     }
     properties.add(property);
   }

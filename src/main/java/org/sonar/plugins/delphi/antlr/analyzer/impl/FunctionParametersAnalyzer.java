@@ -53,7 +53,7 @@ public class FunctionParametersAnalyzer extends CodeAnalyzer {
     List<ArgumentInterface> arguments = getFunctionArguments(codeTree);
     for (ArgumentInterface argument : arguments) {
       activeFunction.addArgument(argument);
-      argumentTypes.append(argument.getType()).append("; ");
+      argumentTypes.append(argument.getType() + "; ");
     }
 
     argumentTypes.append(")");
@@ -61,7 +61,7 @@ public class FunctionParametersAnalyzer extends CodeAnalyzer {
   }
 
   private List<ArgumentInterface> getFunctionArguments(CodeTree codeTree) {
-    List<ArgumentInterface> result = new ArrayList<>();
+    List<ArgumentInterface> result = new ArrayList<ArgumentInterface>();
     Tree parentNode = codeTree.getCurrentCodeNode().getNode();
 
     for (int i = 0; i < parentNode.getChildCount(); ++i) {
@@ -90,7 +90,7 @@ public class FunctionParametersAnalyzer extends CodeAnalyzer {
   }
 
   private List<String> getArgumentNames(Tree nameNode) {
-    List<String> names = new ArrayList<>();
+    List<String> names = new ArrayList<String>();
     for (int i = 0; i < nameNode.getChildCount(); ++i) {
       names.add(nameNode.getChild(i).getText());
     }

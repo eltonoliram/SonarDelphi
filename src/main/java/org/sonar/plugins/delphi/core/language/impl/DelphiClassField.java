@@ -84,7 +84,10 @@ public class DelphiClassField extends DelphiArgument implements ClassFieldInterf
 
   @Override
   public boolean equals(Object o) {
-    return o != null && toString().equals(o.toString());
+    if (o == null) {
+      return false;
+    }
+    return toString().equals(o.toString());
   }
 
   @Override

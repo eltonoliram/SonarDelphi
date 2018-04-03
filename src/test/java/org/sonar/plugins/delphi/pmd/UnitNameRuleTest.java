@@ -28,14 +28,14 @@ public class UnitNameRuleTest extends BasePmdRuleTest {
 
   @Test
   public void testValidRule() {
-    execute(new DelphiUnitBuilderTest().unitName("MyUnit"));
+    analyse(new DelphiUnitBuilderTest().unitName("MyUnit"));
 
     assertThat(issues, is(empty()));
   }
 
   @Test
   public void testValidUnitUsingNameSpace() {
-    execute(new DelphiUnitBuilderTest().unitName("MySonar.MyUnit"));
+    analyse(new DelphiUnitBuilderTest().unitName("MySonar.MyUnit"));
 
     assertThat(issues, is(empty()));
   }

@@ -22,7 +22,7 @@
  */
 package org.sonar.plugins.delphi.codecoverage;
 
-import org.sonar.api.batch.sensor.SensorContext;
+import org.sonar.api.batch.SensorContext;
 
 public interface DelphiCodeCoverageParser
 {

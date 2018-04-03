@@ -125,7 +125,7 @@ public class NodeNameTest {
   }
 
   @Test
-  public void testFindNodeNameByCodeShouldReturnValidNode() {
+  public void testFindNodeNameByCodeShouldReturnValidNode() throws Exception {
     NodeName guidIdentifier = NodeName.findByCode("'{");
     assertNotNull(guidIdentifier);
     assertEquals(GUID_IDENT, guidIdentifier);

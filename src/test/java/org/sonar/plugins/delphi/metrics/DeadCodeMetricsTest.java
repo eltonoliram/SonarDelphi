@@ -29,9 +29,11 @@ import org.junit.Test;
 import org.mockito.Matchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
+import org.sonar.api.batch.fs.InputFile;
+import org.sonar.api.batch.fs.internal.DefaultInputFile;
+import org.sonar.api.batch.rule.ActiveRule;
 import org.sonar.api.batch.rule.ActiveRules;
-import org.sonar.api.batch.rule.internal.ActiveRulesBuilder;
-import org.sonar.api.batch.sensor.internal.SensorContextTester;
+import org.sonar.api.component.ResourcePerspectives;
 import org.sonar.api.issue.Issuable;
 import org.sonar.api.issue.Issue;
 import org.sonar.plugins.delphi.DelphiTestUtils;
@@ -39,7 +41,6 @@ import org.sonar.plugins.delphi.antlr.analyzer.ASTAnalyzer;
 import org.sonar.plugins.delphi.antlr.analyzer.CodeAnalysisResults;
 import org.sonar.plugins.delphi.antlr.analyzer.DelphiASTAnalyzer;
 import org.sonar.plugins.delphi.antlr.ast.DelphiAST;
-import org.sonar.plugins.delphi.core.DelphiLanguage;
 import org.sonar.plugins.delphi.core.language.ClassInterface;
 import org.sonar.plugins.delphi.core.language.ClassPropertyInterface;
 import org.sonar.plugins.delphi.core.language.FunctionInterface;
@@ -48,13 +49,15 @@ import org.sonar.plugins.delphi.core.language.impl.DelphiClass;
 import org.sonar.plugins.delphi.core.language.impl.DelphiClassProperty;
 import org.sonar.plugins.delphi.core.language.impl.DelphiFunction;
 import org.sonar.plugins.delphi.core.language.impl.DelphiUnit;
+import org.sonar.plugins.delphi.debug.DebugSensorContext;
+import org.sonar.plugins.delphi.pmd.StubIssueBuilder;
 import org.sonar.plugins.delphi.utils.DelphiUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.io.File;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.Assert.*;
@@ -64,7 +67,6 @@ import static org.mockito.Mockito.when;
 @Ignore("Unused functions it's not working. There are many false positives.")
 public class DeadCodeMetricsTest {
 
-  private static final String ROOT_NAME = "/org/sonar/plugins/delphi/metrics/";
   private static final String TEST_FILE = "/org/sonar/plugins/delphi/metrics/DeadCodeMetricsTest.pas";
   private static final String DEAD_FILE = "/org/sonar/plugins/delphi/metrics/DeadCodeUnit.pas";
 
@@ -72,11 +74,10 @@ public class DeadCodeMetricsTest {
   private Set<UnitInterface> units;
   private List<ClassInterface> classes;
   private List<FunctionInterface> functions;
-  private SensorContextTester sensorContext;
+  private ResourcePerspectives perspectives;
   private Issuable issuable;
-  private final List<Issue> issues = new ArrayList<>();
+  private final List<Issue> issues = new ArrayList<Issue>();
   private ActiveRules activeRules;
-  private File baseDir;
 
   @Before
   public void init() {
@@ -119,22 +120,42 @@ public class DeadCodeMetricsTest {
     units.add(u2);
     units.add(u3);
 
-    baseDir = DelphiUtils.getResource(ROOT_NAME);
-    sensorContext = SensorContextTester.create(baseDir);
+    perspectives = mock(ResourcePerspectives.class);
 
-    ActiveRulesBuilder rulesBuilder = new ActiveRulesBuilder();
-    rulesBuilder.create(DeadCodeMetrics.RULE_KEY_UNUSED_FUNCTION).setLanguage(DelphiLanguage.KEY).activate();
-    rulesBuilder.create(DeadCodeMetrics.RULE_KEY_UNUSED_UNIT).setLanguage(DelphiLanguage.KEY).activate();
-    activeRules = rulesBuilder.build();
+    issuable = mock(Issuable.class);
 
-    metrics = new DeadCodeMetrics(activeRules, sensorContext);
+    when(perspectives.as(Matchers.eq(Issuable.class), Matchers.isA(InputFile.class))).thenReturn(issuable);
+
+    when(issuable.newIssueBuilder()).thenReturn(new StubIssueBuilder());
+
+    when(issuable.addIssue(Matchers.any(Issue.class))).then(new Answer<Boolean>() {
+      @Override
+      public Boolean answer(InvocationOnMock invocation) throws Throwable {
+        Issue issue = (Issue) invocation.getArguments()[0];
+        issues.add(issue);
+        return Boolean.TRUE;
+      }
+    });
+
+    ActiveRule activeRuleUnusedFunction = mock(ActiveRule.class);
+    ActiveRule activeRuleUnusedUnit = mock(ActiveRule.class);
+
+    when(activeRuleUnusedFunction.ruleKey()).thenReturn(DeadCodeMetrics.RULE_KEY_UNUSED_FUNCTION);
+    when(activeRuleUnusedUnit.ruleKey()).thenReturn(DeadCodeMetrics.RULE_KEY_UNUSED_UNIT);
+
+    activeRules = mock(ActiveRules.class);
+    when(activeRules.find(DeadCodeMetrics.RULE_KEY_UNUSED_FUNCTION)).thenReturn(activeRuleUnusedUnit);
+    when(activeRules.find(DeadCodeMetrics.RULE_KEY_UNUSED_UNIT)).thenReturn(activeRuleUnusedUnit);
+
+    metrics = new DeadCodeMetrics(activeRules, perspectives);
   }
 
   @Test
   public void analyseTest() {
-    metrics.analyse(null, classes, functions, units);
-//    metrics.save(new DefaultInputFile("ROOT_KEY_CHANGE_AT_SONARAPI_5",pathTo("unit3")));
-//    metrics.save(new DefaultInputFile("ROOT_KEY_CHANGE_AT_SONARAPI_5",pathTo("unit2")));
+    DebugSensorContext context = new DebugSensorContext();
+    metrics.analyse(null, context, classes, functions, units);
+    metrics.save(new DefaultInputFile("ROOT_KEY_CHANGE_AT_SONARAPI_5",pathTo("unit3")), context);
+    metrics.save(new DefaultInputFile("ROOT_KEY_CHANGE_AT_SONARAPI_5",pathTo("unit2")), context);
 
     assertThat(issues, hasSize(2));
     int lines[] = {123, 321};
@@ -149,14 +170,15 @@ public class DeadCodeMetricsTest {
   }
 
   @Test
-  public void analyseFileTest() throws IllegalStateException {
+  public void analyseFileTest() throws IllegalStateException, IOException, RecognitionException {
+    DebugSensorContext context = new DebugSensorContext();
     DelphiAST ast = new DelphiAST(DelphiUtils.getResource(TEST_FILE));
     ASTAnalyzer analyser = new DelphiASTAnalyzer(DelphiTestUtils.mockProjectHelper());
     assertFalse("Grammar error", ast.isError());
     CodeAnalysisResults results = analyser.analyze(ast);
-    metrics.analyse(null, results.getClasses(), results.getFunctions(), results.getCachedUnitsAsList());
+    metrics.analyse(null, context, results.getClasses(), results.getFunctions(), results.getCachedUnitsAsList());
 
-//    metrics.save(new DefaultInputFile("ROOT_KEY_CHANGE_AT_SONARAPI_5",DEAD_FILE));
+    metrics.save(new DefaultInputFile("ROOT_KEY_CHANGE_AT_SONARAPI_5",DEAD_FILE), context);
 
     for (Issue issue : issues) {
       System.out.println("issue: " + issue.key() + " line: " + issue.line() + " message: " + issue.message());
@@ -164,4 +186,5 @@ public class DeadCodeMetricsTest {
 
     assertThat(issues, hasSize(2));
   }
+
 }

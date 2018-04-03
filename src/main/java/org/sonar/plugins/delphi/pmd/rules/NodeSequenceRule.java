@@ -39,10 +39,6 @@ public class NodeSequenceRule extends DelphiRule {
   private int count;
   private DelphiPMDNode firstMatchNode;
 
-  public NodeSequenceRule()
-  {
-    definePropertyDescriptor(SEQUENCE);
-  }
   @Override
   public void visit(DelphiPMDNode node, RuleContext ctx) {
 
@@ -64,7 +60,7 @@ public class NodeSequenceRule extends DelphiRule {
   protected void init() {
     count = 0;
     firstMatchNode = null;
-    sequence = getProperty(SEQUENCE).split(",");
+    sequence = getStringProperty(SEQUENCE).split(",");
   }
 
   public void setSequence(String[] sequence) {

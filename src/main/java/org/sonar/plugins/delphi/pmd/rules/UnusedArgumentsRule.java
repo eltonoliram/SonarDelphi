@@ -22,8 +22,9 @@
  */
 package org.sonar.plugins.delphi.pmd.rules;
 
+import net.sourceforge.pmd.PropertyDescriptor;
 import net.sourceforge.pmd.RuleContext;
-import net.sourceforge.pmd.properties.StringMultiProperty;
+import net.sourceforge.pmd.properties.StringProperty;
 import org.antlr.runtime.tree.Tree;
 import org.sonar.plugins.delphi.antlr.DelphiLexer;
 import org.sonar.plugins.delphi.antlr.ast.DelphiPMDNode;
@@ -37,20 +38,16 @@ public class UnusedArgumentsRule extends DelphiRule {
 
   private static final int MAX_LOOK_AHEAD = 3;
 
-  private static final StringMultiProperty EXCLUDED_ARGS = new StringMultiProperty("excluded_args",
+  private static final PropertyDescriptor EXCLUDED_ARGS = new StringProperty("excluded_args",
     "The argument names to ignore", new String[] {}, 1.0f, ',');
 
-  private final List<String> excludedArgs = new ArrayList<>();
+  private final List<String> excludedArgs = new ArrayList<String>();
 
-  public UnusedArgumentsRule()
-  {
-    definePropertyDescriptor(EXCLUDED_ARGS);
-  }
   @Override
   public void visit(DelphiPMDNode node, RuleContext ctx) {
     if (isMethodNode(node)) {
-      final Stack<Tree> functionNodes = new Stack<>();
-      final Stack<Tree> beginNodes = new Stack<>();
+      final Stack<Tree> functionNodes = new Stack<Tree>();
+      final Stack<Tree> beginNodes = new Stack<Tree>();
 
       Tree argsNode = node.getFirstChildWithType(DelphiLexer.TkFunctionArgs);
       if (argsNode == null) {
@@ -122,8 +119,8 @@ public class UnusedArgumentsRule extends DelphiRule {
    * Checks if some argument is unused, if so makes a violation
    * 
    * @param args Argument map
-   * @param node PMDNode
-   * @param methodName Method name
+   * @param node
+   * @param methodName
    */
   private void checkForUnusedArguments(Map<String, Integer> args, RuleContext ctx, DelphiPMDNode node, String methodName) {
     for (Map.Entry<String, Integer> entry : args.entrySet()) {
@@ -166,7 +163,7 @@ public class UnusedArgumentsRule extends DelphiRule {
    * @return Argument map
    */
   private Map<String, Integer> processFunctionArgs(Tree argsNode) {
-    Map<String, Integer> args = new HashMap<>();
+    Map<String, Integer> args = new HashMap<String, Integer>();
     for (int i = 0; i < argsNode.getChildCount(); i += 2) {
       Tree idents = argsNode.getChild(i);
 
@@ -178,7 +175,7 @@ public class UnusedArgumentsRule extends DelphiRule {
       }
 
       for (int c = 0; c < idents.getChildCount(); ++c) {
-        args.put(idents.getChild(c).getText().toLowerCase(), 0);
+        args.put(idents.getChild(c).getText().toLowerCase(), Integer.valueOf(0));
       }
     }
     return args;
@@ -187,7 +184,7 @@ public class UnusedArgumentsRule extends DelphiRule {
   @Override
   protected void init() {
     super.init();
-    List<String> stringProperties = getProperty(EXCLUDED_ARGS);
+    String[] stringProperties = getStringProperties(EXCLUDED_ARGS);
     for (String prop : stringProperties) {
       excludedArgs.add(prop.toLowerCase());
     }

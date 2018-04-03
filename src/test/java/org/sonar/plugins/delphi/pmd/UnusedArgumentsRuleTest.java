@@ -24,6 +24,7 @@ package org.sonar.plugins.delphi.pmd;
 
 import org.junit.Test;
 import org.sonar.api.issue.Issue;
+import org.sonar.plugins.delphi.debug.DebugSensorContext;
 
 import java.util.Arrays;
 
@@ -77,7 +78,7 @@ public class UnusedArgumentsRuleTest extends BasePmdRuleTest {
     builder.appendImpl("  lData := Update(aValue);");
     builder.appendImpl("end;");
 
-    execute(builder);
+    analyse(builder);
 
     assertThat(toString(issues), issues, is(empty()));
   }
@@ -111,7 +112,7 @@ public class UnusedArgumentsRuleTest extends BasePmdRuleTest {
     builder.appendImpl("  lData := Retrieve(aValue);");
     builder.appendImpl("end;");
 
-    execute(builder);
+    analyse(builder);
 
     assertThat(issues, is(empty()));
   }
@@ -143,7 +144,7 @@ public class UnusedArgumentsRuleTest extends BasePmdRuleTest {
     builder.appendImpl("  lData := Update1(aValue);");
     builder.appendImpl("end;");
 
-    execute(builder);
+    analyse(builder);
 
     assertThat(issues, is(empty()));
   }

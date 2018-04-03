@@ -26,18 +26,18 @@ import org.antlr.runtime.Token;
 import org.antlr.runtime.tree.CommonTree;
 
 /**
- * Delphi Node used by ANTLR generated parser
+ * Delphi Node used by ANTLR generated praser
  */
 public class DelphiNode extends CommonTree {
 
-  private ASTTree mainTree = null;
+  protected ASTTree mainTree = null;
 
   /**
    * Default C-tor as in CommonTree
    * 
    * @param payload Provided token
    */
-  DelphiNode(Token payload) {
+  public DelphiNode(Token payload) {
     super(payload);
   }
 
@@ -47,7 +47,7 @@ public class DelphiNode extends CommonTree {
    * @param payload Provided token
    * @param tree AST Tree
    */
-  DelphiNode(Token payload, ASTTree tree) {
+  public DelphiNode(Token payload, ASTTree tree) {
     super(payload);
     mainTree = tree;
   }

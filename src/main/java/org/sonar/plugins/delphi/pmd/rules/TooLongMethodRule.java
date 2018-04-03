@@ -58,7 +58,7 @@ public class TooLongMethodRule extends DelphiRule {
       int firstLine = node.getLine();
       int lastLine = getLastLine(beginNode);
       int lines = lastLine - firstLine;
-      int limit = getProperty(LIMIT);
+      int limit = getIntProperty(LIMIT);
       if (lines > limit) {
         // get method name
         StringBuilder methodName = new StringBuilder();

@@ -22,11 +22,10 @@
  */
 package org.sonar.plugins.delphi.surefire;
 
-import org.sonar.api.batch.sensor.Sensor;
-import org.sonar.api.batch.sensor.SensorContext;
-import org.sonar.api.batch.sensor.SensorDescriptor;
-import org.sonar.api.config.Configuration;
-import org.sonar.plugins.delphi.core.DelphiLanguage;
+import org.sonar.api.batch.Sensor;
+import org.sonar.api.batch.SensorContext;
+import org.sonar.api.config.Settings;
+import org.sonar.api.resources.Project;
 import org.sonar.plugins.delphi.core.helpers.DelphiProjectHelper;
 import org.sonar.plugins.delphi.utils.DelphiUtils;
 import org.sonar.plugins.surefire.api.SurefireUtils;
@@ -41,7 +40,7 @@ public class SurefireSensor implements Sensor {
 
   private static final String DEFAULT_SUREFIRE_REPORTS_PATH_PROPERTY = "target/surefire-reports";
 
-  private final Configuration configuration;
+  private final Settings settings;
   private final DelphiProjectHelper delphiProjectHelper;
 
   /**
@@ -50,37 +49,33 @@ public class SurefireSensor implements Sensor {
    * @param settings Settings provided by Sonar
    * @param delphiProjectHelper The DelphiProjectHelper
    */
-  public SurefireSensor(Configuration settings, DelphiProjectHelper delphiProjectHelper) {
-    this.configuration = settings;
+  public SurefireSensor(Settings settings, DelphiProjectHelper delphiProjectHelper) {
+    this.settings = settings;
     this.delphiProjectHelper = delphiProjectHelper;
-  }
-
-  @Override
-  public void describe(SensorDescriptor descriptor)
-  {
-    DelphiUtils.LOG.info("SurefireSensor sensor describe...");
-    descriptor.name("Delphi SurefireSensor");
-    descriptor.onlyOnLanguage(DelphiLanguage.KEY);
   }
 
   /**
    * {@inheritDoc}
    */
   @Override
+  public boolean shouldExecuteOnProject(Project project) {
+    return delphiProjectHelper.shouldExecuteOnProject();
+  }
+
   /**
-   * The actual sensor code.
+   * {@inheritDoc}
    */
-  public void execute(SensorContext context)
-  {
-    DelphiUtils.LOG.info("Delphi sensor execute...");
-    String[] paths = configuration.getStringArray(SurefireUtils.SUREFIRE_REPORTS_PATH_PROPERTY);
+
+  @Override
+  public void analyse(Project project, SensorContext context) {
+    String[] paths = settings.getStringArray(SurefireUtils.SUREFIRE_REPORTS_PATH_PROPERTY);
 
     if (paths == null || paths.length == 0) {
       DelphiUtils.LOG.warn("No Surefire reports directory found! Using default directory: " + DEFAULT_SUREFIRE_REPORTS_PATH_PROPERTY);
       paths = new String[] {DEFAULT_SUREFIRE_REPORTS_PATH_PROPERTY};
     }
 
-    String mainPath = context.fileSystem().baseDir().getAbsolutePath();
+    String mainPath = delphiProjectHelper.baseDir().getAbsolutePath();
     for (String path : paths) {
       File reportDirectory = DelphiUtils.resolveAbsolutePath(mainPath, path);
       if (!reportDirectory.exists()) {
@@ -88,14 +83,14 @@ public class SurefireSensor implements Sensor {
         continue;
       }
 
-      collect(context, reportDirectory);
+      collect(project, context, reportDirectory);
     }
   }
 
-  protected void collect(SensorContext context, File reportsDir) {
+  protected void collect(Project project, SensorContext context, File reportsDir) {
     DelphiUtils.LOG.info("parsing {}", reportsDir);
     DelphiSureFireParser parser = new DelphiSureFireParser(delphiProjectHelper);
-    parser.collect(context, reportsDir);
+    parser.collect(project, context, reportsDir);
   }
 
   @Override

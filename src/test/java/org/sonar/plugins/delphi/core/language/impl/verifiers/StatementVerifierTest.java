@@ -55,15 +55,15 @@ public class StatementVerifierTest {
   private CodeTree codeTree;
 
   @Before
-  public void setup() {
+  public void setup() throws IOException, RecognitionException {
     File astFile = DelphiUtils.getResource(FILE_NAME);
     ast = new DelphiAST(astFile);
-    codeTree = new CodeTree(new CodeNode<>(ast), new CodeNode<>(ast.getChild(0)));
-    verifier = new StatementVerifier();
+    codeTree = new CodeTree(new CodeNode<ASTTree>(ast), new CodeNode<Tree>(ast.getChild(0)));
+    verifier = new StatementVerifier(DelphiTestUtils.mockProjectHelper());
   }
 
   @Test
-  public void createStatementTest() {
+  public void createStatementTest() throws StatementVerifierException {
     int statementCount = 0;
     int complexStatementsCount = 0;
 

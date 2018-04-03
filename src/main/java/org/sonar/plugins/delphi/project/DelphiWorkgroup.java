@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class DelphiWorkgroup {
 
-  private List<DelphiProject> projects = new ArrayList<>();
+  private List<DelphiProject> projects = new ArrayList<DelphiProject>();
 
   /**
    * Default, empty C-tor

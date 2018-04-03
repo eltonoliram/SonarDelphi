@@ -22,27 +22,24 @@
  */
 package org.sonar.plugins.delphi.pmd.rules;
 
-import net.sourceforge.pmd.lang.ast.Node;
-import net.sourceforge.pmd.lang.rule.AbstractRule;
-import net.sourceforge.pmd.lang.LanguageRegistry;
+import net.sourceforge.pmd.AbstractJavaRule;
+import net.sourceforge.pmd.PropertyDescriptor;
 import net.sourceforge.pmd.RuleContext;
 import net.sourceforge.pmd.properties.IntegerProperty;
 import net.sourceforge.pmd.properties.StringProperty;
 import org.sonar.plugins.delphi.antlr.DelphiLexer;
 import org.sonar.plugins.delphi.antlr.ast.ASTTree;
 import org.sonar.plugins.delphi.antlr.ast.DelphiPMDNode;
-import org.sonar.plugins.delphi.pmd.DelphiParserVisitor;
 import org.sonar.plugins.delphi.pmd.DelphiRuleViolation;
-import net.sourceforge.pmd.lang.rule.ImmutableLanguage;
-import org.sonar.plugins.delphi.pmd.DelphiLanguageModule;
 
+import java.util.Iterator;
 import java.util.List;
 
 /**
  * Basic rule class, extend this class to make your own rules. Do NOT extend
  * from AbstractRule.
  */
-public class DelphiRule extends AbstractRule implements DelphiParserVisitor, ImmutableLanguage {
+public class DelphiRule extends AbstractJavaRule {
 
   protected int lastLineParsed;
 
@@ -50,19 +47,12 @@ public class DelphiRule extends AbstractRule implements DelphiParserVisitor, Imm
 
   private boolean inImplementationSection = false;
 
-  public static final IntegerProperty LIMIT = new IntegerProperty("limit", "The max limit.", 1, 100, 1, 1.0f);
-  public static final IntegerProperty THRESHOLD = new IntegerProperty("Threshold", "Threshold", 1, 100, 10, 1.0f);
-  public static final StringProperty START = new StringProperty("start", "The AST node to start from", "", 1.0f);
-  public static final StringProperty END = new StringProperty("end", "The AST node to stop the search", "", 1.0f);
-  public static final StringProperty LOOK_FOR = new StringProperty("lookFor", "What nodes look for", "", 1.0f);
+  public static final PropertyDescriptor LIMIT = new IntegerProperty("limit", "The max limit.", 1, 1.0f);
+  public static final PropertyDescriptor START = new StringProperty("start", "The AST node to start from", "", 1.0f);
+  public static final PropertyDescriptor END = new StringProperty("end", "The AST node to stop the search", "", 1.0f);
+  public static final PropertyDescriptor LOOK_FOR = new StringProperty("lookFor", "What nodes look for", "", 1.0f);
 
   public DelphiRule() {
-    super.setLanguage(LanguageRegistry.getLanguage(DelphiLanguageModule.NAME));
-    definePropertyDescriptor(LIMIT);
-    definePropertyDescriptor(THRESHOLD);
-    definePropertyDescriptor(START);
-    definePropertyDescriptor(END);
-    definePropertyDescriptor(LOOK_FOR);
   }
 
   /**
@@ -75,31 +65,18 @@ public class DelphiRule extends AbstractRule implements DelphiParserVisitor, Imm
     // do nothing
   }
 
-  @Override
-  public Object visit(DelphiPMDNode node, Object data) {
-    return null;
-  };
-
   /**
    * Visits all nodes in a file
    */
 
-  /**
-   * @inheritdoc
-   */
   @Override
-  public void apply(List<? extends Node> nodes, RuleContext ctx)
-  {
-      visitAll(nodes, ctx);
-  };
-
-  protected void visitAll(List<? extends Node> acus, RuleContext ctx) {
+  protected void visitAll(@SuppressWarnings("rawtypes") List acus, RuleContext ctx) {
     lastLineParsed = -1;
     currentVisibility = DelphiLexer.PUBLISHED;
     inImplementationSection = false;
     init();
-    for (Node acu : acus) {
-      DelphiPMDNode node = (DelphiPMDNode) acu;
+    for (Iterator<?> i = acus.iterator(); i.hasNext();) {
+      DelphiPMDNode node = (DelphiPMDNode) i.next();
       ASTTree ast = node.getASTTree();
       if (ast != null) {
         String codeLine = node.getASTTree().getFileSourceLine(node.getLine());

@@ -49,7 +49,7 @@ public enum CompilerDirectiveType {
    * create a hash map for faster values lookup
    */
   static {
-    mappedValues = new HashMap<>();
+    mappedValues = new HashMap<String, CompilerDirectiveType>();
     CompilerDirectiveType[] values = CompilerDirectiveType.values();
     for (CompilerDirectiveType type : values) {
       String names[] = type.getName().split(",");

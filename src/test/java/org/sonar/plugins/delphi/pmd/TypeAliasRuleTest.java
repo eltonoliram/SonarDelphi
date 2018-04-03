@@ -34,7 +34,7 @@ public class TypeAliasRuleTest extends BasePmdRuleTest {
     builder.appendDecl("type");
     builder.appendDecl("  TMySetOfChar = set of Char;");
 
-    execute(builder);
+    analyse(builder);
 
     assertThat(issues, is(empty()));
   }
@@ -74,7 +74,7 @@ public class TypeAliasRuleTest extends BasePmdRuleTest {
     builder.appendDecl("  end;");
     builder.appendDecl("  TMetaClass = class of TMyClass;");
 
-    execute(builder);
+    analyse(builder);
 
     assertThat(issues, is(empty()));
   }
@@ -87,7 +87,7 @@ public class TypeAliasRuleTest extends BasePmdRuleTest {
     builder.appendDecl("  TMyRecord = record");
     builder.appendDecl("  end;");
 
-    execute(builder);
+    analyse(builder);
 
     assertThat(issues, is(empty()));
   }
@@ -100,7 +100,7 @@ public class TypeAliasRuleTest extends BasePmdRuleTest {
     builder.appendDecl("  TMyClass = class");
     builder.appendDecl("  end;");
 
-    execute(builder);
+    analyse(builder);
 
     assertThat(issues, is(empty()));
   }

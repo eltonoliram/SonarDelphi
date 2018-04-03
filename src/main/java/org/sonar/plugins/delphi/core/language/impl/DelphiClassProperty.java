@@ -32,8 +32,8 @@ import org.sonar.plugins.delphi.core.language.FunctionInterface;
  */
 public class DelphiClassProperty extends DelphiClassField implements ClassPropertyInterface {
 
-  private FunctionInterface readFunction = null;
-  private FunctionInterface writeFunction = null;
+  FunctionInterface readFunction = null;
+  FunctionInterface writeFunction = null;
 
   /**
    * Default ctor
@@ -113,17 +113,20 @@ public class DelphiClassProperty extends DelphiClassField implements ClassProper
   public String toString() {
     StringBuilder suffix = new StringBuilder();
     if (writeFunction != null) {
-      suffix.append("@").append(writeFunction.toString());
+      suffix.append("@" + writeFunction.toString());
     }
     if (readFunction != null) {
-      suffix.append("@").append(readFunction.toString());
+      suffix.append("@" + readFunction.toString());
     }
     return super.toString() + suffix.toString();
   }
 
   @Override
   public boolean equals(Object o) {
-    return o != null && toString().equals(o.toString());
+    if (o == null) {
+      return false;
+    }
+    return toString().equals(o.toString());
   }
 
   @Override

@@ -33,7 +33,7 @@ import java.util.List;
 
 /**
  * Rule that checks if you are using function/variables names correctly, that is
- * you don't misspell them, example: <code>var
+ * you don't mispell them, example: <code>var
  * xyz: integer;
  * begin
  * xyz := 1;	//OK
@@ -45,8 +45,8 @@ import java.util.List;
  */
 public class MixedNamesRule extends DelphiRule {
 
-  private List<String> functionNames = new ArrayList<>();
-  private List<String> variableNames = new ArrayList<>();
+  private List<String> functionNames = new ArrayList<String>();
+  private List<String> variableNames = new ArrayList<String>();
   private boolean onInterface = true;
   private String typeName = "";
 
@@ -140,7 +140,7 @@ public class MixedNamesRule extends DelphiRule {
    * @return List of names
    */
   private List<String> buildNames(Tree node, boolean multiply) {
-    List<String> result = new ArrayList<>();
+    List<String> result = new ArrayList<String>();
 
     if (node == null) {
       return result;

@@ -69,7 +69,7 @@ public class ProjectXmlParser extends DefaultHandler {
   }
 
   @Override
-  public void characters(char ch[], int start, int length) {
+  public void characters(char ch[], int start, int length) throws SAXException {
     if (isReading) {
       readData = new String(ch.clone(), start, length);
     }

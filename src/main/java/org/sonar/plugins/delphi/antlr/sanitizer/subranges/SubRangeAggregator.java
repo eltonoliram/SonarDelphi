@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class SubRangeAggregator {
 
-  protected ArrayList<SubRange> data = new ArrayList<>();
+  protected ArrayList<SubRange> data = new ArrayList<SubRange>();
 
   /**
    * add a new sub range

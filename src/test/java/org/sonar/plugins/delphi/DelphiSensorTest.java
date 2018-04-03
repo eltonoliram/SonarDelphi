@@ -24,168 +24,226 @@ package org.sonar.plugins.delphi;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
 import org.sonar.api.batch.fs.InputFile;
-import org.sonar.api.batch.fs.internal.DefaultInputDir;
 import org.sonar.api.batch.fs.internal.DefaultInputFile;
-import org.sonar.api.batch.fs.internal.TestInputFileBuilder;
+import org.sonar.api.batch.rule.ActiveRule;
 import org.sonar.api.batch.rule.ActiveRules;
-import org.sonar.api.batch.rule.internal.NewActiveRule;
-import org.sonar.api.batch.sensor.measure.Measure;
-import org.sonar.plugins.delphi.core.DelphiLanguage;
+import org.sonar.api.component.ResourcePerspectives;
+import org.sonar.api.measures.Measure;
+import org.sonar.api.resources.Project;
+import org.sonar.api.rule.RuleKey;
 import org.sonar.plugins.delphi.core.helpers.DelphiProjectHelper;
-import org.sonar.plugins.delphi.metrics.DeadCodeMetrics;
+import org.sonar.plugins.delphi.debug.DebugSensorContext;
 import org.sonar.plugins.delphi.debug.ProjectMetricsXMLParser;
-import org.sonar.plugins.delphi.metrics.ComplexityMetrics;
 import org.sonar.plugins.delphi.project.DelphiProject;
 import org.sonar.plugins.delphi.utils.DelphiUtils;
-import org.sonar.api.batch.sensor.internal.DefaultSensorDescriptor;
-import org.sonar.api.batch.sensor.internal.SensorContextTester;
-import org.sonar.api.batch.fs.internal.FileMetadata;
-import org.sonar.api.batch.rule.internal.ActiveRulesBuilder;
-import org.sonar.api.batch.fs.internal.Metadata;
 
-import java.io.*;
-import java.nio.charset.Charset;
+import java.io.File;
 import java.nio.file.Paths;
 import java.util.*;
-import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class DelphiSensorTest {
 
+  private Project project = null;
   private DelphiSensor sensor = null;
   private File baseDir = null;
+  private Map<String, Integer> keyMetricIndex = null;
   private DelphiProjectHelper delphiProjectHelper;
   private ActiveRules activeRules;
-  private SensorContextTester context;
+  private ResourcePerspectives perspectives;
 
-  private final String moduleKey = "";
   private static final String ROOT_NAME = "/org/sonar/plugins/delphi/SimpleDelphiProject";
   private final DelphiProject delphiProject = new DelphiProject("Default Project");
 
-  private String getRelativePath(File prefix, String fullPath)
-  {
-    String result = fullPath.substring(prefix.getAbsolutePath().length() + 1);
-    return result;
-  }
-
   @Before
-  public void init() throws IOException {
+  public void init() {
+
+    project = mock(Project.class);
+
 
     baseDir = DelphiUtils.getResource(ROOT_NAME);
     File reportDir = new File(baseDir.getAbsolutePath() + "/reports");
 
-    // get all directories
-    File[] dirs = baseDir.listFiles(DelphiUtils.getDirectoryFilter());
+    File[] dirs = baseDir.listFiles(DelphiUtils.getDirectoryFilter()); // get
+                                                                       // all
+                                                                       // directories
 
-    List<File> sourceDirs = new ArrayList<>(dirs.length);
-    List<File> sourceFiles = new ArrayList<>();
-
-    context = SensorContextTester.create(baseDir);
-    delphiProjectHelper = new DelphiProjectHelper(context.config(), context.fileSystem());
+    List<File> sourceDirs = new ArrayList<File>(dirs.length);
+    List<InputFile> sourceFiles = new ArrayList<InputFile>();
 
     sourceDirs.add(baseDir); // include baseDir
-    DefaultInputDir inputBaseDir = new DefaultInputDir(moduleKey, "");
-    context.fileSystem().add(inputBaseDir);
     for (File source : baseDir.listFiles(DelphiUtils.getFileFilter())) {
-
-      InputFile baseInputFile = TestInputFileBuilder.create(moduleKey, baseDir, source)
-          .setModuleBaseDir(baseDir.toPath())
-          .setLanguage(DelphiLanguage.KEY)
-          .setType(InputFile.Type.MAIN)
-          .setContents(DelphiUtils.readFileContent(source, delphiProjectHelper.encoding()))
-          .build();
-
-      sourceFiles.add(source);
-      context.fileSystem().add(baseInputFile);
+      sourceFiles.add(new DefaultInputFile("ROOT_KEY_CHANGE_AT_SONARAPI_5",source.getPath()).setModuleBaseDir(Paths.get(ROOT_NAME)));
     }
 
-    // get all source files from all directories
-    for (File directory : dirs) {
-
+    for (File directory : dirs) { // get all source files from all
+                                  // directories
       File[] files = directory.listFiles(DelphiUtils.getFileFilter());
       for (File sourceFile : files) {
-
-        DefaultInputFile inputFile = TestInputFileBuilder.create(moduleKey, baseDir, sourceFile)
-            .setModuleBaseDir(baseDir.toPath())
-            .setLanguage(DelphiLanguage.KEY)
-            .setType(InputFile.Type.MAIN)
-            .setContents(DelphiUtils.readFileContent(sourceFile, delphiProjectHelper.encoding()))
-            .build();
-
-        context.fileSystem().add(inputFile);
-        sourceFiles.add(sourceFile);
+        sourceFiles.add(new DefaultInputFile("ROOT_KEY_CHANGE_AT_SONARAPI_5",sourceFile.getPath()).setModuleBaseDir(Paths.get(ROOT_NAME)));
       }
-      DefaultInputDir inputDir = new DefaultInputDir(moduleKey, getRelativePath(baseDir,directory.getPath()));
-      context.fileSystem().add(inputDir);
-      // put all directories to list
-      sourceDirs.add(directory);
+      sourceDirs.add(directory); // put all directories to list
     }
+
+
+
+    perspectives = mock(ResourcePerspectives.class);
+
+    delphiProjectHelper = DelphiTestUtils.mockProjectHelper();
+    DelphiTestUtils.mockGetFileFromString(delphiProjectHelper);
 
     delphiProject.setSourceFiles(sourceFiles);
 
-    ActiveRulesBuilder rulesBuilder = new ActiveRulesBuilder();
-    NewActiveRule rule = rulesBuilder.create(ComplexityMetrics.RULE_KEY_METHOD_CYCLOMATIC_COMPLEXITY);
-    rule.setParam("Threshold", "3").setLanguage(DelphiLanguage.KEY).activate();
-    rulesBuilder.create(DeadCodeMetrics.RULE_KEY_UNUSED_FUNCTION).setLanguage(DelphiLanguage.KEY).activate();
-    activeRules = rulesBuilder.build();
+    when(delphiProjectHelper.getWorkgroupProjects()).thenReturn(Arrays.asList(delphiProject));
+    when(delphiProjectHelper.getDirectory(Matchers.any(File.class), Matchers.any(Project.class))).thenCallRealMethod();
 
-    sensor = new DelphiSensor(delphiProjectHelper, activeRules, context);
+    activeRules = mock(ActiveRules.class);
+    ActiveRule activeRule = mock(ActiveRule.class);
+    when(activeRules.find(Matchers.any(RuleKey.class))).thenReturn(activeRule);
+    when(activeRule.param("Threshold")).thenReturn("3");
+
+    sensor = new DelphiSensor(delphiProjectHelper, activeRules, perspectives);
   }
 
   @Test
-  public void describeTest() {
-    DefaultSensorDescriptor sensorDescriptor = new DefaultSensorDescriptor();
-    sensor.describe(sensorDescriptor);
-    assertEquals("Combined LCOV and LOC sensor", sensorDescriptor.name());
-    String [] expected = {"delph"};
-    assertArrayEquals(expected, sensorDescriptor.languages().toArray());
+  public void shouldExecuteOnProject() {
+    assertTrue(sensor.shouldExecuteOnProject(project));
   }
 
   @Test
-  public void executeTest() {
-    sensor.execute(context);
-
-    assertEquals(12, context.allIssues().size());
-
-    // create a map of expected values for each file
-    Map<String, Map<String,String>> expectedValues = new HashMap<>();
+  public void analyseTest() {
+    createKeyMetricIndexMap();
 
     // xml file for expected metrics for files
-    ProjectMetricsXMLParser xmlParser = new ProjectMetricsXMLParser(
-        new File(baseDir.getAbsolutePath() + File.separator + "values.xml"));
+    ProjectMetricsXMLParser xmlParser = new ProjectMetricsXMLParser(new File(baseDir.getAbsolutePath() + File.separator + "values.xml"));
+
+    DebugSensorContext context = new DebugSensorContext();
+//    sensor.analyse(project, context); // analysing project
+
+    // create a map of expected values for each file
+    Map<String, Double[]> expectedValues = new HashMap<String, Double[]>();
     for (String fileName : xmlParser.getFileNames()) {
       expectedValues.put(fileName.toLowerCase(), xmlParser.getFileValues(fileName));
     }
 
-    for (InputFile file : context.fileSystem().inputFiles()) {
-      String fileName = file.filename().toLowerCase();
-      if (expectedValues.containsKey(fileName) && DelphiUtils.acceptFile(fileName)) {
-        Map<String, String> fileExpectedValues = expectedValues.get(fileName);
-        Collection<Measure> measures = context.measures(file.key());
-        for (Measure measure : measures) {
-          String metricName = measure.metric().key();
-          String expectedValue = fileExpectedValues.get(metricName);
-          String currentValue = measure.value().toString();
-          assertEquals(file.toString() + "@" + metricName, expectedValue, currentValue);
-        }
+    for (String key : context.getMeasuresKeys()) {
+      Measure<?> measure = context.getMeasure(key);
+
+      // get file name
+      String fileKey = key.substring(0, key.lastIndexOf(':')).toLowerCase();
+
+      // get metric key
+      String metricKey = key.substring(key.lastIndexOf(':') + 1, key.length());
+
+      if (!expectedValues.containsKey(fileKey) && DelphiUtils.acceptFile(fileKey)) {
+        fail("Measure key: " + key + " Unexpected file: " + fileKey);
+      } else {
+        // Skip directories
+        continue;
       }
+
+      if (keyMetricIndex.get(metricKey) == null) {
+        continue;
+      }
+
+      double currentValue = measure.getValue();
+      double expectedValue = expectedValues.get(fileKey)[keyMetricIndex.get(metricKey)];
+
+      assertEquals(fileKey + "@" + metricKey, expectedValue, currentValue, 0.0);
+    }
+  }
+
+  private void createKeyMetricIndexMap() {
+    keyMetricIndex = new HashMap<String, Integer>();
+    keyMetricIndex.put("complexity", 0);
+    keyMetricIndex.put("functions", 1);
+    keyMetricIndex.put("function_complexity", 2);
+    keyMetricIndex.put("classes", 3);
+    keyMetricIndex.put("lines", 4);
+    keyMetricIndex.put("comment_lines", 5);
+    keyMetricIndex.put("accessors", 6);
+    keyMetricIndex.put("public_undocumented_api", 7);
+    keyMetricIndex.put("ncloc", 8);
+    keyMetricIndex.put("files", 9);
+    keyMetricIndex.put("package.files", 10);
+    keyMetricIndex.put("package.packages", 11);
+    keyMetricIndex.put("class_complexity", 12);
+    keyMetricIndex.put("noc", 13);
+    keyMetricIndex.put("statements", 14);
+    keyMetricIndex.put("public_api", 15);
+    keyMetricIndex.put("comment_blank_lines", 16);
+  }
+
+  @Test
+  public void analyseFileOnRootDir() {
+    createKeyMetricIndexMap();
+
+    ProjectMetricsXMLParser xmlParser = new ProjectMetricsXMLParser(new File(baseDir.getAbsolutePath()
+      + File.separator + "values.xml")); // xml file for
+    // expected
+    // metrics for
+    // files
+    DebugSensorContext context = new DebugSensorContext(); // new debug
+                                                           // context for
+                                                           // debug
+                                                           // information
+//    sensor.analyse(project, context); // analysing project
+
+    Map<String, Double[]> expectedValues = new HashMap<String, Double[]>(); // create
+                                                                            // a
+                                                                            // map
+                                                                            // of
+                                                                            // expected
+                                                                            // values
+                                                                            // for
+                                                                            // each
+                                                                            // file
+    for (String fileName : xmlParser.getFileNames()) {
+      expectedValues.put(fileName, xmlParser.getFileValues(fileName));
+    }
+
+    for (String key : context.getMeasuresKeys()) { // check each measure if
+                                                   // it is correct
+      String fileKey = key.substring(0, key.lastIndexOf(':')); // get file
+                                                               // name
+      String metricKey = key.substring(key.lastIndexOf(':') + 1, key.length()); // get
+                                                                                // metric
+                                                                                // key
+
+      if (!expectedValues.containsKey(fileKey)) {
+        continue; // skip [default] package
+      }
+      if (keyMetricIndex.get(metricKey) == null) {
+        continue;
+      }
+
+      Measure<?> measure = context.getMeasure(key);
+      double currentValue = measure.getValue();
+      double expectedValue = expectedValues.get(fileKey)[keyMetricIndex.get(metricKey)];
+
+      assertEquals(fileKey + "@" + metricKey, expectedValue, currentValue, 0.0);
     }
   }
 
   @Test
   public void analyseWithEmptySourceFiles() {
     delphiProject.getSourceFiles().clear();
-//    sensor.execute(context);
+    DebugSensorContext context = new DebugSensorContext();
+    sensor.analyse(project, context);
   }
 
   @Test
-  public void analyseWithBadSourceFileSyntax() {
+  public void analyseWithBadSourceFileSintax() {
     delphiProject.getSourceFiles().clear();
     delphiProject.getSourceFiles().add(new File(baseDir + "/Globals.pas"));
     delphiProject.getSourceFiles().add(new File(baseDir + "/../BadSyntax.pas"));
-//    sensor.execute(context);
+    DebugSensorContext context = new DebugSensorContext();
+//    sensor.analyse(project, context);
 
     //assertThat("processed files", sensor.getProcessedFilesCount(), is(1));
     //assertThat("units", sensor.getUnits(), hasSize(1));

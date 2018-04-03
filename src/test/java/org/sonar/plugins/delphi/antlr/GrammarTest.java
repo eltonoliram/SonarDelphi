@@ -53,7 +53,6 @@ public class GrammarTest {
   }
 
   @Test
-  @Ignore
   public void test() throws Exception {
     parseFile("GrammarTest.pas");
   }
@@ -69,13 +68,11 @@ public class GrammarTest {
   }
 
   @Test
-  @Ignore
   public void parseNewGrammar() throws Exception {
     parseFile("GrammarTestNew.pas");
   }
 
   @Test
-  @Ignore
   public void parseComplexArray() throws Exception {
     parseFile("ComplexArray.pas");
   }

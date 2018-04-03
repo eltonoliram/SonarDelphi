@@ -42,18 +42,18 @@ public class DelphiClass implements ClassInterface {
 
   private static final String UNKNOWN_CLASS_NAME = "UnknownClass";
 
-  private static final String UNKNOWN_FILE_NAME = "UnknownUnit";
+  public static final String UNKNOWN_FILE_NAME = "UnknownUnit";
 
   private String name = null;
   private String fileName = null;
   private int visibility = DelphiParser.PRIVATE;
 
-  private List<ClassFieldInterface> fields = new ArrayList<>();
-  private List<ClassPropertyInterface> properties = new ArrayList<>();
-  private Set<FunctionInterface> functions = new HashSet<>();
-  private Set<FunctionInterface> declarations = new HashSet<>();
-  private Set<ClassInterface> parents = new HashSet<>();
-  private Set<ClassInterface> children = new HashSet<>();
+  private List<ClassFieldInterface> fields = new ArrayList<ClassFieldInterface>();
+  private List<ClassPropertyInterface> properties = new ArrayList<ClassPropertyInterface>();
+  private Set<FunctionInterface> functions = new HashSet<FunctionInterface>();
+  private Set<FunctionInterface> declarations = new HashSet<FunctionInterface>();
+  private Set<ClassInterface> parents = new HashSet<ClassInterface>();
+  private Set<ClassInterface> children = new HashSet<ClassInterface>();
   private String realName = null;
 
   /**
@@ -285,7 +285,7 @@ public class DelphiClass implements ClassInterface {
 
   @Override
   public ClassInterface[] getDescendants() {
-    List<ClassInterface> allChildren = new ArrayList<>();
+    List<ClassInterface> allChildren = new ArrayList<ClassInterface>();
     for (ClassInterface child : children) {
       processChild((DelphiClass) child, allChildren);
     }

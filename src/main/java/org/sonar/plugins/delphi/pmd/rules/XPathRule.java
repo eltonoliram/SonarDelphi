@@ -54,14 +54,9 @@ public class XPathRule extends DelphiRule {
    */
   private static String cachedFile = "";
 
-  public XPathRule()
-  {
-    definePropertyDescriptor(XPATH);
-  }
-
   @Override
   public void visit(DelphiPMDNode node, RuleContext ctx) {
-    String xPathString = getProperty(XPATH);
+    String xPathString = getStringProperty(XPATH);
     if (StringUtils.isEmpty(xPathString)) {
       return;
     }
@@ -77,14 +72,14 @@ public class XPathRule extends DelphiRule {
         String className = resultNode.getAttributes().getNamedItem("class").getTextContent();
         String methodName = resultNode.getAttributes().getNamedItem("method").getTextContent();
         String packageName = resultNode.getAttributes().getNamedItem("package").getTextContent();
-        int line = Integer.parseInt(resultNode.getAttributes().getNamedItem("line").getTextContent());
+        int line = Integer.valueOf(resultNode.getAttributes().getNamedItem("line").getTextContent());
         String codeLine = node.getASTTree().getFileSourceLine(line);
 
         if (codeLine.trim().endsWith("//NOSONAR")) {
           continue;
         }
 
-        int column = Integer.parseInt(resultNode.getAttributes().getNamedItem("column").getTextContent());
+        int column = Integer.valueOf(resultNode.getAttributes().getNamedItem("column").getTextContent());
         String msg = this.getMessage().replaceAll("\\{\\}", resultNode.getTextContent());
         DelphiRuleViolation violation = new DelphiRuleViolation(this, ctx, className,
           methodName, packageName, line, column,
@@ -92,7 +87,8 @@ public class XPathRule extends DelphiRule {
         addViolation(ctx, violation);
       }
     } catch (Exception e) {
-      DelphiUtils.LOG.debug("XPath error: '{0}' at rule {1}", e.getMessage(), getName());
+      DelphiUtils.LOG.debug("XPath error: '" + e.getMessage() + "' at rule " + getName());
+      e.printStackTrace();
     }
   }
 
@@ -102,7 +98,7 @@ public class XPathRule extends DelphiRule {
    */
 
   @Override
-  protected void visitAll(List<? extends net.sourceforge.pmd.lang.ast.Node> acus, RuleContext ctx) {
+  protected void visitAll(@SuppressWarnings("rawtypes") List acus, RuleContext ctx) {
     init();
     if (acus.iterator().hasNext()) {
       visit((DelphiPMDNode) acus.iterator().next(), ctx);
@@ -115,7 +111,7 @@ public class XPathRule extends DelphiRule {
    * @param astTree AST tree
    * @return AST tree document
    */
-  private static Document getCachedDocument(ASTTree astTree) {
+  private Document getCachedDocument(ASTTree astTree) {
     if (!astTree.getFileName().equals(cachedFile)) {
       cachedData = astTree.generateDocument();
       cachedFile = astTree.getFileName();

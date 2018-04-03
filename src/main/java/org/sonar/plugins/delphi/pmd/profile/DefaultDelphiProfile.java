@@ -22,12 +22,10 @@
  */
 package org.sonar.plugins.delphi.pmd.profile;
 
-import org.sonar.api.rules.ActiveRule;
-import org.sonar.api.rules.ActiveRuleParam;
-import org.sonar.plugins.delphi.core.DelphiLanguage;
-import org.sonar.api.server.profile.BuiltInQualityProfilesDefinition;
+import org.sonar.api.profiles.ProfileDefinition;
 import org.sonar.api.profiles.RulesProfile;
-import org.sonar.plugins.delphi.pmd.DelphiPmdConstants;
+import org.sonar.api.utils.ValidationMessages;
+import org.sonar.plugins.delphi.core.DelphiLanguage;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -35,15 +33,13 @@ import java.io.Reader;
 /**
  * default Delphi rules profile
  */
-
-public class DefaultDelphiProfile implements BuiltInQualityProfilesDefinition
-{
+public class DefaultDelphiProfile extends ProfileDefinition {
 
   private DelphiPmdProfileImporter importer;
 
   /**
    * ctor
-   *
+   * 
    * @param importer delphi pmd profile importer provided by Sonar
    */
   public DefaultDelphiProfile(DelphiPmdProfileImporter importer) {
@@ -51,23 +47,14 @@ public class DefaultDelphiProfile implements BuiltInQualityProfilesDefinition
   }
 
   @Override
-  public void define(Context context) {
-    NewBuiltInQualityProfile qualityProfile = context.createBuiltInQualityProfile("Sonar way", DelphiLanguage.KEY);
-
+  public RulesProfile createProfile(ValidationMessages messages) {
     Reader reader = new InputStreamReader(getClass().getResourceAsStream(
-        "/org/sonar/plugins/delphi/pmd/default-delphi-profile.xml"));
-    RulesProfile rulesProfile = importer.importProfile(reader, null);
-
-    for (ActiveRule rule : rulesProfile.getActiveRules()) {
-      NewBuiltInActiveRule activeRule = qualityProfile.activateRule(DelphiPmdConstants.REPOSITORY_KEY, rule.getRuleKey());
-      activeRule.overrideSeverity(rule.getSeverity().toString());
-      for (ActiveRuleParam ruleParam: rule.getActiveRuleParams()) {
-        activeRule.overrideParam(ruleParam.getKey(), ruleParam.getValue());
-      }
-    }
-
-    qualityProfile.setDefault(true);
-
-    qualityProfile.done();
+      "/org/sonar/plugins/delphi/pmd/default-delphi-profile.xml"));
+    RulesProfile profile = importer.importProfile(reader, messages);
+    profile.setLanguage(DelphiLanguage.KEY);
+    profile.setName("Sonar way");
+    profile.setDefaultProfile(Boolean.TRUE);
+    return profile;
   }
+
 }

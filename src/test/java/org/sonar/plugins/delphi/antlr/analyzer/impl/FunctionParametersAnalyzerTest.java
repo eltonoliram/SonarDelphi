@@ -73,20 +73,20 @@ public class FunctionParametersAnalyzerTest {
   @Test
   public void canAnalyzeTest() {
     code = new CodeTree(null, null);
-    code.setCurrentNode(new CodeNode<>(EMPTY_NODE));
+    code.setCurrentNode(new CodeNode<Tree>(EMPTY_NODE));
     assertEquals(false, analyzer.canAnalyze(code));
 
-    code.setCurrentNode(new CodeNode<>(PARAMETERS_NODE));
+    code.setCurrentNode(new CodeNode<Tree>(PARAMETERS_NODE));
     assertEquals(true, analyzer.canAnalyze(code));
   }
 
   @Test
-  public void doAnalyzeTest() {
+  public void doAnalyzeTest() throws IOException, RecognitionException {
     results.setActiveFunction(new DelphiFunction("myProcedure"));
 
     File testFile = DelphiUtils.getResource(TEST_FILE);
     ASTTree ast = new DelphiAST(testFile);
-    code = new CodeTree(new CodeNode<>(ast), new CodeNode<>(ast.getChild(0)));
+    code = new CodeTree(new CodeNode<ASTTree>(ast), new CodeNode<Tree>(ast.getChild(0)));
 
     NodeOperation operation = new AdvanceToNodeOperation(LexerMetrics.FUNCTION_ARGS);
     CodeNode<Tree> startNode = operation.execute(ast.getChild(0));
@@ -111,7 +111,7 @@ public class FunctionParametersAnalyzerTest {
   }
 
   @Test
-  public void throwExceptionWhenActiveFunctionIsNull() {
+  public void throwExceptionWhenActiveFunctionIsNull() throws IOException, RecognitionException {
     expectedException.equals(IllegalArgumentException.class);
     expectedException.expectMessage(containsString("activeFunction cannot be null"));
 
@@ -119,7 +119,7 @@ public class FunctionParametersAnalyzerTest {
 
     File testFile = DelphiUtils.getResource(TEST_FILE);
     ASTTree ast = new DelphiAST(testFile);
-    code = new CodeTree(new CodeNode<>(ast), new CodeNode<>(ast.getChild(0)));
+    code = new CodeTree(new CodeNode<ASTTree>(ast), new CodeNode<Tree>(ast.getChild(0)));
 
     NodeOperation operation = new AdvanceToNodeOperation(LexerMetrics.FUNCTION_ARGS);
     CodeNode<Tree> startNode = operation.execute(ast.getChild(0));

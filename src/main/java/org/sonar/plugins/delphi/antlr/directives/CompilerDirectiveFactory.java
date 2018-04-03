@@ -46,7 +46,7 @@ public class CompilerDirectiveFactory {
    *             occurs
    */
   public List<CompilerDirective> produce(String data) throws CompilerDirectiveFactorySyntaxException {
-    List<CompilerDirective> result = new ArrayList<>();
+    List<CompilerDirective> result = new ArrayList<CompilerDirective>();
     int directivePos = getDirectiveFirstChar(data, 0);
     while (directivePos > -1) {
       int closingBracket = getDirectiveLastChar(data, directivePos);
@@ -106,7 +106,7 @@ public class CompilerDirectiveFactory {
     }
   }
 
-  private int getDirectiveFirstChar(String data, int startPosition) {
+  private int getDirectiveFirstChar(String data, int startPosition) throws CompilerDirectiveFactorySyntaxException {
     return data.indexOf("{$", startPosition);
   }
 

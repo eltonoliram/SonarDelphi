@@ -130,7 +130,9 @@ public class CodeAnalysisCacheResults {
    * @return list of cached units
    */
   public Set<UnitInterface> getCachedUnitsAsList() {
-    return new HashSet<>(allUnits);
+    Set<UnitInterface> result = new HashSet<>();
+    result.addAll(allUnits);
+    return result;
   }
 
   /**

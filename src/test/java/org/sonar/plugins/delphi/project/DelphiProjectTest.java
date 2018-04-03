@@ -68,7 +68,7 @@ public class DelphiProjectTest {
 
   @Test
   public void setDefinitionsTest() {
-    List<String> defs = new ArrayList<>();
+    List<String> defs = new ArrayList<String>();
     project.setDefinitions(defs);
     assertEquals(defs, project.getDefinitions());
   }
@@ -81,7 +81,7 @@ public class DelphiProjectTest {
   }
 
   @Test
-  public void parseFileTest() throws IllegalArgumentException {
+  public void parseFileTest() throws IllegalArgumentException, IOException {
     project = new DelphiProject(DelphiUtils.getResource(XML_FILE));
 
     assertEquals("Simple Delphi Product", project.getName());
